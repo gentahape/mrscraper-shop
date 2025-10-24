@@ -1,0 +1,114 @@
+version: '3.9'
+
+services:
+
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_HOST=postgres://mrscrapershop:mrscrapershop123@db:5432/mrscrapershop_db?sslmode=disable
+      - REDIS_HOST=redis://redis:6379
+      - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
+    volumes:
+      - ./product-service:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev
+    networks:
+      - mrscrapershop-net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_HOST=postgres://mrscrapershop:mrscrapershop123@db:5432/mrscrapershop_db?sslmode=disable
+      - REDIS_HOST=redis://redis:6379
+      - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
+      - PRODUCT_SERVICE_URL=http://product-service:3000
+    volumes:
+      - ./order-service:/app
+    command: air
+    networks:
+      - mrscrapershop-net
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    restart: on-failure
+
+  db:
+    image: postgres:18-alpine
+    container_name: db
+    environment:
+      - POSTGRES_USER=mrscrapershop
+      - POSTGRES_PASSWORD=mrscrapershop123
+      - POSTGRES_DB=mrscrapershop_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mrscrapershop-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mrscrapershop -d mrscrapershop_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mrscrapershop-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - mrscrapershop-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  mrscrapershop-net:
+    driver: bridge

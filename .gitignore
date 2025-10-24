@@ -1,24 +1,36 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+.env
+.env.*
+!.env.example
 
-# Logs
-logs
 *.log
 npm-debug.log*
-pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
-# dotenv environment variable files
-.env
-.env.development
-.env.test
-.env.production
+.DS_Store
+Thumbs.db
 
-# temp directory
-.temp
-.tmp
+.idea/
+.vscode/
+*.swp
+
+/product-service/node_modules/
+
+/product-service/dist/
+
+/product-service/.npm
+/product-service/coverage/
+/product-service/.eslintcache
+
+/product-service/.env
+/product-service/.env.*
+!/product-service/.env.example
+
+/order-service/*.exe
+/order-service/main
+
+/order-service/vendor/
+
+/order-service/.env
+/order-service/.env.*
+!/order-service/.env.example
