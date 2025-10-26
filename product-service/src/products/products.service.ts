@@ -20,10 +20,10 @@ export class ProductsService {
       ...createProductDto,
       createdAt: new Date(),
     });
+    const savedData = await this.productsRepository.save(newData);
 
     this.productBus.emit('product_created', newData);
 
-    const savedData = await this.productsRepository.save(newData);
     return savedData;
   }
 

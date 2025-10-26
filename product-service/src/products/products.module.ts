@@ -19,8 +19,10 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
           transport: Transport.RMQ,
           options: {
             urls: [configService.get('RABBITMQ_HOST')],
-            queue: 'products_queue',
-            queueOptions: {
+            exchange: 'orders_exchange',
+            exchangeType: 'topic',
+            queue: 'products_queue', 
+            queueOptions: { 
               durable: true,
             }
           }
