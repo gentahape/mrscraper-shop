@@ -1,14 +1,12 @@
-version: '3.9'
-
 services:
 
   product-service:
     build:
       context: ./product-service
       dockerfile: Dockerfile
-    container_name: product-service
-    ports:
-      - "3000:3000"
+    container_name: product-service # comment this line when to do load testing
+    ports: # comment this line when to do load testing
+      - "3000:3000" # comment this line when to do load testing
     environment:
       - DATABASE_HOST=postgres://mrscrapershop:mrscrapershop123@db:5432/mrscrapershop_db?sslmode=disable
       - REDIS_HOST=redis://redis:6379
@@ -67,6 +65,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command: postgres -c 'max_connections=500'
     networks:
       - mrscrapershop-net
     healthcheck:
@@ -104,7 +103,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+    
 volumes:
   postgres_data:
     driver: local
