@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dtos/create-product.dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 describe('ProductsController', () => {
   let controller: ProductsController;
   let service: jest.Mocked<ProductsService>;
+  let stockUpdateBus: jest.Mocked<ClientProxy>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,49 +20,79 @@ describe('ProductsController', () => {
             reduceStock: jest.fn(),
           },
         },
+        {
+          provide: 'STOCK_UPDATE_BUS',
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<ProductsController>(ProductsController);
     service = module.get(ProductsService);
+    stockUpdateBus = module.get('STOCK_UPDATE_BUS');
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
   });
 
   describe('create', () => {
-    it('should call ProductsService.create with correct dto', async () => {
-      const dto: CreateProductDto = { name: 'Test Product', price: 100, qty: 5 };
-      const result = { id: 1, ...dto };
-      service.create.mockResolvedValue(result as any);
+    it('should call service.create', async () => {
+      const dto = { name: 'New Product', qty: 10, price: 100 } as any;
+      const mockResult = { id: 1, ...dto };
+      service.create.mockResolvedValue(mockResult);
 
-      const response = await controller.create(dto, {} as any);
-
+      const result = await controller.create(dto, {} as any);
       expect(service.create).toHaveBeenCalledWith(dto);
-      expect(response).toEqual(result);
+      expect(result).toEqual(mockResult);
     });
   });
 
   describe('findOne', () => {
-    it('should call ProductsService.findOne with id as number', async () => {
-      const product = { id: 1, name: 'Product', price: 100, qty: 5 };
-      service.findOne.mockResolvedValue(product as any);
+    it('should call service.findOne', async () => {
+      const product = { id: 1, name: 'Test Product' } as any;
+      service.findOne.mockResolvedValue(product);
 
-      const response = await controller.findOne(1 as any, {} as any);
-
+      const result = await controller.findOne(1, {} as any);
       expect(service.findOne).toHaveBeenCalledWith(1);
-      expect(response).toEqual(product);
+      expect(result).toEqual(product);
     });
   });
 
   describe('handleOrderCreated', () => {
-    it('should call ProductsService.reduceStock with correct params', async () => {
-      const payload = { productId: 10, qty: 3 };
-
+    it('should buffer qty correctly', async () => {
+      const payload = { productId: 1, qty: 5 };
       await controller.handleOrderCreated(payload);
 
-      expect(service.reduceStock).toHaveBeenCalledWith(10, 3);
+      expect(controller['stockUpdateBuffer'].get(1)).toEqual(5);
+    });
+
+    it('should accumulate qty for same product', async () => {
+      controller['stockUpdateBuffer'].set(1, 3);
+      const payload = { productId: 1, qty: 2 };
+      await controller.handleOrderCreated(payload);
+
+      expect(controller['stockUpdateBuffer'].get(1)).toEqual(5);
+    });
+  });
+
+  describe('handleStockUpdateBatch', () => {
+    it('should emit stock_update_task for buffered products', async () => {
+      controller['stockUpdateBuffer'].set(1, 5);
+      await controller.handleStockUpdateBatch();
+
+      expect(stockUpdateBus.emit).toHaveBeenCalledWith('stock_update_task', { productId: 1, quantity: 5 });
+      expect(controller['stockUpdateBuffer'].size).toBe(0);
+    });
+  });
+
+  describe('handleStockUpdateTask', () => {
+    it('should call reduceStock', async () => {
+      const task = { productId: 1, quantity: 2 };
+      await controller.handleStockUpdateTask(task);
+      expect(service.reduceStock).toHaveBeenCalledWith(1, 2);
     });
   });
 });

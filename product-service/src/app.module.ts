@@ -6,7 +6,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as Joi from 'joi';
 import { CacheModule } from '@nestjs/cache-manager';
-import { redisStore } from 'cache-manager-redis-yet';
+import * as redisStore from 'cache-manager-redis-store';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -32,6 +33,11 @@ import { redisStore } from 'cache-manager-redis-yet';
         database: configService.get('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+        extra: {
+          max: 400,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 2000,
+        }
       }),
     }),
     CacheModule.registerAsync({
@@ -39,12 +45,12 @@ import { redisStore } from 'cache-manager-redis-yet';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: await redisStore({
-          url: configService.get('REDIS_HOST'),
-          ttl: 60
-        })
+        store: redisStore,
+        url: configService.get('REDIS_HOST'),
+        ttl: 60
       })
     }),
+    ScheduleModule.forRoot(),
     ProductsModule
   ],
   controllers: [AppController],

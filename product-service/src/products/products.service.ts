@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './products.entity';
 import { CreateProductDto } from './dtos/create-product.dto';
@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from '@nestjs/cache-manager';
 import { ClientProxy } from '@nestjs/microservices';
+import { MoreThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class ProductsService {
@@ -39,19 +40,19 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
     
-    await this.cacheManager.set(cacheKey, data);
+    await this.cacheManager.set(cacheKey, data, 300 * 1000);
     return data as Product;
   }
 
   async reduceStock(id: number, qty: number) {
-    const product = await this.findOne(id);
-    if (product.qty < qty) {
-      throw new BadRequestException('Not enough stock');
-    }
-
-    product.qty -= qty;
-    await this.productsRepository.save(product);
-
-    await this.cacheManager.del(`product:${id}`);
+    await this.productsRepository.update(
+      { 
+        id: id, 
+        qty: MoreThanOrEqual(qty)
+      },
+      { 
+        qty: () => `qty - ${qty}`
+      }
+    );
   }
 }

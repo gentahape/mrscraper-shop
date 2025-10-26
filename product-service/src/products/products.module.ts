@@ -27,6 +27,23 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
             }
           }
         })
+      },
+      {
+        name: 'STOCK_UPDATE_BUS',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+            options: {
+              urls: [configService.get('RABBITMQ_HOST')],
+              exchange: 'stock_exchange',
+              exchangeType: 'topic',
+              queue: 'stock_update_queue',
+              queueOptions: {
+                durable: true,
+              },
+            }
+        })
       }
     ])
   ],
