@@ -18,7 +18,7 @@ import (
 var ctx = context.Background()
 
 type OrderService interface {
-	CreateOrder(req model.CreateOrderRequest) (*model.Order, error)
+	CreateOrder(req model.CreateOrderRequest) error
 	GetOrdersByProductID(productID string) ([]model.Order, error)
 }
 
@@ -40,29 +40,36 @@ func NewOrderService(repo repository.OrderRepository, rdb *redis.Client, amqpCha
 	}
 }
 
-func (s *orderService) CreateOrder(req model.CreateOrderRequest) (*model.Order, error) {
+func (s *orderService) CreateOrder(req model.CreateOrderRequest) error {
 	url := fmt.Sprintf("%s/products/%d", s.productServiceURL, req.ProductId)
 
 	httpReq, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	httpRes, err := s.httpClient.Do(httpReq)
 	if err != nil {
 		log.Printf("error calling product-service: %v", err)
-		return nil, errors.New("failed to reach product service")
+		return errors.New("failed to reach product service")
 	}
 	defer httpRes.Body.Close()
 
 	if httpRes.StatusCode != http.StatusOK {
-		return nil, errors.New("product not found")
+		return errors.New("product not found")
 	}
 
 	var product model.ProductResponse
 	if err := json.NewDecoder(httpRes.Body).Decode(&product); err != nil {
-		return nil, errors.New("failed to decode product response")
+		return errors.New("failed to decode product response")
 	}
 
 	if product.Qty < req.Quantity {
-		return nil, errors.New("stock product not enough")
+		return errors.New("stock product not enough")
 	}
+
+	go s.processOrderInBackground(req, product)
+
+	return nil
+}
+
+func (s *orderService) processOrderInBackground(req model.CreateOrderRequest, product model.ProductResponse) {
 
 	totalPrice := product.Price * float64(req.Quantity)
 	newOrder := &model.Order{
@@ -73,7 +80,7 @@ func (s *orderService) CreateOrder(req model.CreateOrderRequest) (*model.Order, 
 	}
 
 	if err := s.repo.CreateOrder(newOrder); err != nil {
-		return nil, errors.New("failed to save order")
+		return
 	}
 
 	eventPayload := map[string]interface{}{
@@ -85,7 +92,7 @@ func (s *orderService) CreateOrder(req model.CreateOrderRequest) (*model.Order, 
 	}
 
 	eventData, _ := json.Marshal(eventPayload)
-	err = s.amqpChan.Publish(
+	err := s.amqpChan.Publish(
 		"orders_exchange",
 		"order_created",
 		false,
@@ -98,11 +105,6 @@ func (s *orderService) CreateOrder(req model.CreateOrderRequest) (*model.Order, 
 	if err != nil {
 		log.Printf("failed to publish order_created event: %v", err)
 	}
-
-	cacheKey := fmt.Sprintf("orders_pid_%d", req.ProductId)
-	s.rdb.Del(ctx, cacheKey)
-
-	return newOrder, nil
 }
 
 func (s *orderService) GetOrdersByProductID(productID string) ([]model.Order, error) {

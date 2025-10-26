@@ -32,7 +32,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	order, err := h.service.CreateOrder(req)
+	err := h.service.CreateOrder(req)
 	if err != nil {
 		if err.Error() == "product not found" {
 			writeError(w, http.StatusNotFound, err.Error())
@@ -44,7 +44,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, order)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *OrderHandler) GetOrdersByProductID(w http.ResponseWriter, r *http.Request) {

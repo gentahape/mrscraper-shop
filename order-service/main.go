@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"order-service/internal/handler"
 	"order-service/internal/model"
@@ -28,6 +29,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
+	dbSql, err := db.DB()
+	if err != nil {
+		log.Fatalf("failed to get database connection pool: %v", err)
+	}
+	dbSql.SetMaxIdleConns(10)
+	dbSql.SetMaxOpenConns(100)
+	dbSql.SetConnMaxLifetime(time.Minute * 5)
 
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {

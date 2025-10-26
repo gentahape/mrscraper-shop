@@ -20,7 +20,17 @@ func NewOrderRepository(db *gorm.DB) OrderRepository {
 }
 
 func (r *orderRepository) CreateOrder(order *model.Order) error {
-	return r.db.Create(order).Error
+	tx := r.db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Create(order).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func (r *orderRepository) GetOrdersByProductID(productID string) ([]model.Order, error) {
