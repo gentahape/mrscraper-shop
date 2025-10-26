@@ -9,7 +9,7 @@ async function ensureExchangeBinding() {
   const conn = await amqp.connect(process.env.RABBITMQ_HOST);
   const ch = await conn.createChannel();
 
-  await ch.assertExchange('product_events_queue', 'topic', { durable: true });
+  await ch.assertExchange('orders_exchange', 'topic', { durable: true });
   await ch.assertQueue('product_events_queue', { durable: true });
   await ch.bindQueue('product_events_queue', 'orders_exchange', 'order_created');
 
