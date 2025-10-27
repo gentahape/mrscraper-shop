@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strconv"
+
 	"order-service/internal/model"
 
 	"gorm.io/gorm"
@@ -35,7 +37,13 @@ func (r *orderRepository) CreateOrder(order *model.Order) error {
 
 func (r *orderRepository) GetOrdersByProductID(productID string) ([]model.Order, error) {
 	var orders []model.Order
-	if err := r.db.Where("product_id = ?", productID).Order("orders.id desc").Find(&orders).Error; err != nil {
+
+	pid, err := strconv.ParseInt(productID, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.db.Where("product_id = ?", pid).Order("orders.id desc").Find(&orders).Error; err != nil {
 		return nil, err
 	}
 	return orders, nil
