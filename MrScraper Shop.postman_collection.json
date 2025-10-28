@@ -1,0 +1,499 @@
+{
+	"info": {
+		"_postman_id": "51f5b8de-42a3-4ae4-8cd5-d8288cbc7051",
+		"name": "MrScraper Shop",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11831890"
+	},
+	"item": [
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Add New Product With Valid Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('it should response 201 status code', () => {",
+									"    pm.expect(pm.response).to.have.status(201);",
+									"});",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"}); ",
+									"",
+									"pm.test('response body should be an object', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('object');",
+									"});",
+									"",
+									"pm.test('response body should have correct property types', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.property('id').to.be.a('number').to.not.be.null;",
+									"    pm.expect(responseJson).to.have.property('name').to.be.a('string').to.not.be.empty;",
+									"    pm.expect(responseJson).to.have.property('price').to.be.a('number');",
+									"    pm.expect(responseJson).to.have.property('qty').to.be.a('number');",
+									"    pm.expect(responseJson).to.have.property('createdAt').to.be.a('string').to.not.be.empty;",
+									"    pm.environment.set('product_id', responseJson.id);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Shirt\",\n    \"price\": 1000,\n    \"qty\": 100000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{product_baseUrl}}/products",
+							"host": [
+								"{{product_baseUrl}}"
+							],
+							"path": [
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add New Product With Invalid Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('response status code should have 400 value', () => {",
+									"   pm.response.to.have.status(400);",
+									"}); ",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"  pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"}); ",
+									"",
+									"pm.test('response body should an object', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": 745,\n    \"price\": \"1000\",\n    \"qty\": 50\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{product_baseUrl}}/products",
+							"host": [
+								"{{product_baseUrl}}"
+							],
+							"path": [
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Product With Valid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('response status code should have 200 value', () => {",
+									"  pm.response.to.have.status(200);",
+									"}); ",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"   pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"});",
+									"",
+									"pm.test('response body should be an object', () => {",
+									"   const responseJson = pm.response.json();",
+									"   pm.expect(responseJson).to.be.an('object');",
+									"});",
+									"",
+									"pm.test('response body should contain product object', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.have.ownProperty('id');",
+									"    pm.expect(responseJson).to.have.ownProperty('name');",
+									"    pm.expect(responseJson).to.have.ownProperty('price');",
+									"    pm.expect(responseJson).to.have.ownProperty('qty');",
+									"    pm.expect(responseJson).to.have.ownProperty('createdAt');",
+									"}); "
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{product_baseUrl}}/products/{{product_id}}",
+							"host": [
+								"{{product_baseUrl}}"
+							],
+							"path": [
+								"products",
+								"{{product_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Product With Invalid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('response status code should have 404 value', () => {",
+									"   pm.response.to.have.status(404);",
+									"}); ",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"  pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"}); ",
+									"",
+									"pm.test('response body should an object', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{product_baseUrl}}/products/0",
+							"host": [
+								"{{product_baseUrl}}"
+							],
+							"path": [
+								"products",
+								"0"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Add New Order With Valid Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('it should response 202 status code', () => {",
+									"    pm.expect(pm.response).to.have.status(202);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": {{product_id}},\n    \"quantity\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_baseUrl}}/orders",
+							"host": [
+								"{{order_baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add New Order With Invalid Qty",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('it should response 400 status code', () => {",
+									"    pm.expect(pm.response).to.have.status(400);",
+									"});",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"}); ",
+									"",
+									"pm.test('response body should be an object', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": {{product_id}},\n    \"quantity\": 100000000000000000000000000000000000000000000000000000000000000000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_baseUrl}}/orders",
+							"host": [
+								"{{order_baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add New Order With Invalid Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('it should response 404 status code', () => {",
+									"    pm.expect(pm.response).to.have.status(404);",
+									"});",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"    pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"}); ",
+									"",
+									"pm.test('response body should be an object', () => {",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": 0,\n    \"quantity\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_baseUrl}}/orders",
+							"host": [
+								"{{order_baseUrl}}"
+							],
+							"path": [
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Order By Product With Valid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('response status code should have 200 value', () => {",
+									"  pm.response.to.have.status(200);",
+									"}); ",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"   pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"});",
+									"",
+									"pm.test('response body should be an array', () => {",
+									"   const responseJson = pm.response.json();",
+									"   pm.expect(responseJson).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_baseUrl}}/orders/product/{{product_id}}",
+							"host": [
+								"{{order_baseUrl}}"
+							],
+							"path": [
+								"orders",
+								"product",
+								"{{product_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Order By Product With Invalid ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('response status code should have 200 value', () => {",
+									"  pm.response.to.have.status(200);",
+									"}); ",
+									"",
+									"pm.test('response Content-Type header should have application/json value', () => {",
+									"   pm.expect(pm.response.headers.get('Content-Type')).to.includes('application/json');",
+									"});",
+									"",
+									"pm.test('response body should be an array', () => {",
+									"   const responseJson = pm.response.json();",
+									"   pm.expect(responseJson).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_baseUrl}}/orders/product/0",
+							"host": [
+								"{{order_baseUrl}}"
+							],
+							"path": [
+								"orders",
+								"product",
+								"0"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
