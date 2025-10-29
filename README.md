@@ -4,7 +4,7 @@ This project is a challenge implementation to build a simple microservice applic
 
 ## Key Features
 
-* **Microservices:** `product-service` (NestJS) and `order-service` (Go) in separate codebases..
+* **Microservices:** `product-service` (NestJS) and `order-service` (Go) in separate codebases.
 * **Event-Driven Communication:** Using RabbitMQ for asynchronous communication (when orders are created and when product stock is reduced).
 * **Caching:** Using Redis to cache frequently accessed product and order data.
 * **Database:** Using PostgreSQL.
@@ -48,28 +48,8 @@ This mode runs one instance of each service, maps the `product-service` port to 
     git clone https://github.com/gentahape/mrscraper-shop.git
     cd mrscraper-shop
     ```
-2.  **Adjust Environment**
-    * Copy the `.env.example` files in the `product-service` and `order-service` folders to their respective root folders.
-    * Adjust and match the contents of the `.env` files in both folders based on the contents of `docker-compose.yml`.
-      - Example `.env` file in `product-service` :
-        ```ini
-          DB_HOST=db
-          DB_PORT=5432
-          DB_USERNAME=mrscrapershop
-          DB_PASSWORD=mrscrapershop123
-          DB_DATABASE=mrscrapershop_db
 
-          REDIS_HOST=redis://redis:6379
-          RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
-        ```
-      - Example `.env` file in `order-service` :
-        ```ini
-          DATABASE_HOST=postgres://mrscrapershop:mrscrapershop123@db:5432/mrscrapershop_db?sslmode=disable
-          REDIS_HOST=redis://redis:6379
-          RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
-          PRODUCT_SERVICE_URL=http://product-service:3000
-        ``` 
-3.  **Run Docker Compose:**
+2.  **Run Docker Compose:**
     ```bash
     docker compose up --build
     ```
@@ -95,28 +75,7 @@ This mode runs multiple instances of `product-service` as per load testing requi
           #    - "3000:3000" # comment this line when to do load testing
           # ...
         ```
-3.  **Adjust Environment**
-    * Copy the `.env.example` files in the `product-service` and `order-service` folders to their respective root folders.
-    * Adjust and match the contents of the `.env` files in both folders based on the contents of `docker-compose.yml`.
-      - Example `.env` file in `product-service` :
-        ```ini
-          DB_HOST=db
-          DB_PORT=5432
-          DB_USERNAME=mrscrapershop
-          DB_PASSWORD=mrscrapershop123
-          DB_DATABASE=mrscrapershop_db
-
-          REDIS_HOST=redis://redis:6379
-          RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
-        ```
-      - Example `.env` file in `order-service` :
-        ```ini
-          DATABASE_HOST=postgres://mrscrapershop:mrscrapershop123@db:5432/mrscrapershop_db?sslmode=disable
-          REDIS_HOST=redis://redis:6379
-          RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
-          PRODUCT_SERVICE_URL=http://product-service:3000
-        ``` 
-4.  **Run Docker Compose with `--scale`:**
+3.  **Run Docker Compose with `--scale`:**
     ```bash
     docker compose up --build --scale product-service=5
     ```
@@ -126,7 +85,7 @@ This mode runs multiple instances of `product-service` as per load testing requi
 
 ### Manual Testing (Use Mode 1)
 
-This mode allows you to interact directly with the API using tools like Postman. Make sure you run the application in Mode 1 to access the product-service port. You can also use curl to interact with the API.
+This mode allows you to interact directly with the API using Postman or using `curl` to interact with the API. Make sure you run the application in Mode 1 to access the product-service port.
 
 * **Base URL Product Service:** `http://localhost:3000`
 * **Base URL Order Service:** `http://localhost:8080`

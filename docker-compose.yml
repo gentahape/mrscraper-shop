@@ -8,7 +8,11 @@ services:
     ports: # comment this line when to do load testing
       - "3000:3000" # comment this line when to do load testing
     environment:
-      - DATABASE_HOST=postgres://mrscrapershop:mrscrapershop123@db:5432/mrscrapershop_db?sslmode=disable
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=mrscrapershop
+      - DB_PASSWORD=mrscrapershop123
+      - DB_DATABASE=mrscrapershop_db
       - REDIS_HOST=redis://redis:6379
       - RABBITMQ_HOST=amqp://guest:guest@rabbitmq:5672
     volumes:
