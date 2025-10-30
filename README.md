@@ -141,7 +141,8 @@ This application is designed to run with multiple instances of `product-service`
     ```
 
 3.  **Create Initial Product:**
-
+    * Open a **new** terminal in the *root* of the project.
+    * Run the following command:
     ```bash
     docker compose exec bff-service curl -X POST http://localhost:8000/products \
     -H "Content-Type: application/json" \
@@ -153,7 +154,7 @@ This application is designed to run with multiple instances of `product-service`
     ```
 
 4.  **Run k6 Test via Docker:**
-    * Open a **new** terminal in the *root* of the project.
+    * Open a **new** terminal or the same terminal with Create Initial Product in the *root* of the project.
     * Run the following command:
         ```bash
         docker run --rm -v $(pwd):/scripts --network mrscraper-shop_mrscrapershop-net grafana/k6:latest run /scripts/load-testing.js
