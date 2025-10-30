@@ -119,14 +119,40 @@ All API interactions are done through the **BFF Service** at `http://localhost:8
 
 This application is designed to run with multiple instances of `product-service` and `bff-service` to handle the load. It aims to test the `POST /orders` endpoint via BFF at **1000 requests/second**.
 
-1.  **Make Sure the Application Runs in a Scaled:**
+1.  **Adjust `docker-compose.yml`:
+    * Open the `docker-compose.yml` file.
+    * Make sure the `container_name:` section inside the `product-service` and `container_name:` & `ports:` sections inside the `bff-service` are commented out or removed.
+        ```yaml
+        product-service:
+            # ...
+            #  container_name: product-service # comment this line when to do load testing
+            # ...
+        bff-service:
+            # ...
+            # container_name: bff-service # comment this line when to do load testing
+            # ports: # comment this line when to do load testing
+            #   - "8000:8000" # comment this line when to do load testing
+            # ...
+        ```
+
+2.  **Make Sure the Application Runs in a Scaled:**
     ```bash
     docker compose up --build --scale product-service=5 --scale bff-service=5 
     ```
 
-2.  **Create Initial Product:** Use `curl http://localhost:8000/products ...` as above to create a product (`productId: 1` with a large `qty`).
+3.  **Create Initial Product:**
 
-3.  **Run k6 Test via Docker:**
+    ```bash
+    docker compose exec bff-service curl -X POST http://localhost:8000/products \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Keychain",
+      "price": 1000,
+      "qty": 100000 
+    }'
+    ```
+
+4.  **Run k6 Test via Docker:**
     * Open a **new** terminal in the *root* of the project.
     * Run the following command:
         ```bash
@@ -138,4 +164,4 @@ This application is designed to run with multiple instances of `product-service`
     * `http_reqs`: Target **~1000/s**.
 
 **Expected Results:**
-> A successful load test will demonstrate the system's ability to handle approximately 1000 requests per second (`http_reqs`) consistently throughout the test. The success rate (`checks_succeeded`) should be close to 100%, with the failure rate (`http_req_failed`) close to 0%. The response latency (`http_req_duration`) for `POST /orders` (which returns `202 Accepted`) is expected to be low, indicating that the endpoint is quickly accepting requests even though the actual processing is occurring in the background. If actual results are lower, analyzing service logs and k6 metrics can help identify bottlenecks.
+A successful load test will demonstrate the system's ability to handle approximately 1000 requests per second (`http_reqs`) consistently throughout the test. The success rate (`checks_succeeded`) should be close to 100%, with the failure rate (`http_req_failed`) close to 0%. The response latency (`http_req_duration`) for `POST /orders` (which returns `202 Accepted`) is expected to be low, indicating that the endpoint is quickly accepting requests even though the actual processing is occurring in the background. If actual results are lower, analyzing service logs and k6 metrics can help identify bottlenecks.
