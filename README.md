@@ -1,32 +1,45 @@
 # MrScraper Shop
 
-This project is a challenge implementation to build a simple microservice application using NestJS (Product Service) and Golang (Order Service). The application demonstrates event-driven communication using RabbitMQ, caching using Redis, basic CRUD operations, and is designed to handle high load on the order creation endpoint.
+This project is a challenge implementation to build a simple microservice application using NestJS (Product Service), Golang (Order Service) and Express.js (BFF Service). The application demonstrates event-driven communication using RabbitMQ, caching using Redis, basic CRUD operations, and is designed to handle high load on the order creation endpoint.
 
 ## Key Features
 
-* **Microservices:** `product-service` (NestJS) and `order-service` (Go) in separate codebases.
-* **Event-Driven Communication:** Using RabbitMQ for asynchronous communication (when orders are created and when product stock is reduced).
-* **Caching:** Using Redis to cache frequently accessed product and order data.
+* **Microservices:** `product-service` (NestJS), `order-service` (Go), and `bff-service` (Express.js) in separate codebases.
+* **Komunikasi Event-Driven:** Using RabbitMQ for asynchronous communication of stock reduction.
+* **Caching:** Using Redis to cache product and order data.
 * **Database:** Using PostgreSQL.
 * **Containerization:** The entire stack runs using Docker and Docker Compose.
 * **Load Testing:** Designed and tested to handle high loads on the `POST /orders` endpoint.
 
 ## Architecture
 
-1.  **`product-service` (NestJS):**
+1.  **`bff-service` (Express.js):**
+    * Single entry point for all requests from clients.
+    * Generates `X-Request-ID` for each request.
+    * Perform basic validation.
+    * Forward requests to `product-service` or `order-service` via internal HTTP.
+    * Passing the `X-Request-ID` to the microservice behind it.
+    * Handle errors from microservices and provide consistent responses.
+
+2.  **`product-service` (NestJS):**
     * Manages product data.
     * Provides a `GET /products/:id` endpoint with Redis caching.
-    * Publishes a `product_created` event when a new product is created.
-    * Listens to the `order_created` event from RabbitMQ to reduce stock using an internal worker.
-    * Listens to the `stock_update_queue` queue to process stock reduction tasks from its own batch worker.
-2.  **`order-service` (Go):**
+    * Publishes `product_created` event.
+    * Listens to `order created` events to collect stock and buffer reduction data.
+    * Sending stock reduction task in `stock update_queue`.
+    * Listens to `stock_update_queue` to process stock reduction tasks.
+
+3.  **`order-service` (Go):**
     * Manages order data.
     * Validates product existence by calling `product-service` via HTTP, leveraging the Redis cache in `product-service`.
     * Creates orders and publishes `order_created` events to RabbitMQ asynchronously.
     * Provides a `GET /orders/product/:productid` endpoint with Redis caching.
-3.  **RabbitMQ:** Message broker for inter-service communication.
-4.  **Redis:** Cache storage.
-5.  **PostgreSQL:** Primary database.
+
+4.  **RabbitMQ:** Message broker for inter-service communication.
+
+5.  **Redis:** Cache storage.
+
+6.  **PostgreSQL:** Database.
 
 ## Prerequisite
 
@@ -34,14 +47,11 @@ Before starting, make sure you have installed:
 
 * **Docker:** [https://www.docker.com/get-started](https://www.docker.com/get-started)
 * **Git:** To clone a repository.
+* **Postman (Optional):** To using API Requests.
 
 ## Running Applications Locally
 
-This repository can be run in two main modes:
-
-### Mode 1: Manual Development and Testing (Single Instance)
-
-This mode runs one instance of each service, maps the `product-service` port to `localhost:3000` and `order-service` to `localhost:8080` for easy access from Postman/browser.
+### Initial Preparation (Only Once or After `down -v`)
 
 1.  **Clone Repository:**
     ```bash
@@ -55,44 +65,13 @@ This mode runs one instance of each service, maps the `product-service` port to 
     ```
     *Wait until all services are running and the log shows the application is ready.*
 
-### Mode 2: High Load Simulation (Scaled)
-
-This mode runs multiple instances of `product-service` as per load testing requirements and does not map container_name and port `3000` to `localhost`.
-
-1.  **Clone Repository:**
-    ```bash
-    git clone https://github.com/gentahape/mrscraper-shop.git
-    cd mrscraper-shop
-    ```
-2.  **Adjust `docker-compose.yml`:**
-    * Open the `docker-compose.yml` file.
-    * Make sure the `container_name:` and `ports:` sections inside the `product-service` service are commented out or removed.
-        ```yaml
-        product-service:
-          # ...
-          #  container_name: product-service # comment this line when to do load testing
-          #  ports: # comment this line when to do load testing
-          #    - "3000:3000" # comment this line when to do load testing
-          # ...
-        ```
-3.  **Run Docker Compose with `--scale`:**
-    ```bash
-    docker compose up --build --scale product-service=5
-    ```
-    *This will run 5 instances of `product-service`.*
-
 ## API Usage and Example Requests
 
-### Manual Testing (Use Mode 1)
+All API interactions are done through the **BFF Service** at `http://localhost:8000`.
 
-This mode allows you to interact directly with the API using Postman or using `curl` to interact with the API. Make sure you run the application in Mode 1 to access the product-service port.
+### Using Postman:
 
-* **Base URL Product Service:** `http://localhost:3000`
-* **Base URL Order Service:** `http://localhost:8080`
-
-#### Using Postman
-
-1.  **Open Postman:** Make sure you have Postman installed (https://www.postman.com/downloads/).
+1.  **Open Postman.**
 
 2.  **Import Collection:** Import the file `MrScraper Shop.postman_collection.json` from the root folder of this project.
 
@@ -100,91 +79,70 @@ This mode allows you to interact directly with the API using Postman or using `c
 
 4.  **Run Request:** You can run the collection directly without having to select a request because the request sequence is already in order, from creating a product to creating an order. The collection also includes validation of the expected response, from the status code to the response format.
 
-#### Using `curl`
+### Using `curl`:
 
 1.  **Create New Product:**
     ```bash
-    curl -X POST http://localhost:3000/products \
+    curl -X POST http://localhost:8000/products \
     -H "Content-Type: application/json" \
     -d '{
       "name": "Keychain",
-      "price": 10000,
+      "price": 1000,
       "qty": 100000 
     }'
     ```
     *Note the `id` of the product produced*
 
-2.  **Get Product by ID:**
+2.  **Get Product By ID:**
     ```bash
-    curl http://localhost:3000/products/1 
+    curl http://localhost:8000/products/1 
     ```
     *The second call to this endpoint will use the cache.*
 
 3.  **Create New Order (Asynchronous):**
     ```bash
-    curl -X POST http://localhost:8080/orders \
+    curl -X POST http://localhost:8000/orders \
     -H "Content-Type: application/json" \
     -d '{
       "productId": 1, 
       "quantity": 2
     }'
     ```
-    *The response will be `202 Accepted` quickly. The storage and stock reduction process occurs in the background.*
+    *The response will be 202 Accepted quickly. The storage and stock reduction process occurs in the background.*
 
 4.  **Wait a few seconds** for the event to be processed and stock to decrease.
 
 5.  **Check Product Stock Again:**
     ```bash
-    curl http://localhost:3000/products/1
+    curl http://localhost:8000/orders/product/1
     ```
 
-6.  **Get Orders by Product ID:**
+6.  **Get Orders By Product ID:**
     ```bash
     curl http://localhost:8080/orders/product/1
     ```
 
-### Creating a Product While Mode 2 (Scaled) is Active
+## Load Testing
 
-Testing the `POST /orders` endpoint at **1000 requests/second**.
+This application is designed to run with multiple instances of `product-service` and `bff-service` to handle the load. It aims to test the `POST /orders` endpoint via BFF at **1000 requests/second**.
 
-1.  **Make Sure the Application is Running in Mode 2 (Scaled):**
+1.  **Make Sure the Application Runs in a Scaled:**
     ```bash
-    docker compose up --build --scale product-service=5 
+    docker compose up --build --scale product-service=5 --scale bff-service=5 
     ```
 
-2.  **Create Initial Product (If Not Existing/Database Deleted):**
-    ```bash
-    docker compose exec order-service curl -X POST http://product-service:3000/products \
-    -H "Content-Type: application/json" \
-    -d '{
-      "name": "Sticker",
-      "price": 1000,
-      "qty": 100000 
-    }'
-    ```
-    *This sends a request from within the `order-service` container to `product-service`. Note the product `id` for the k6 script.*
+2.  **Create Initial Product:** Use `curl http://localhost:8000/products ...` as above to create a product (`productId: 1` with a large `qty`).
 
-3.  **Prepare k6 Script:**
-    * Make sure the `load-testing.js` file is in the *root* of the project.
-    * Configure the script properly:
-        * `rate: 1000`
-        * `url`: Make sure the target URL of `order-service` is correct. Since we are running k6 in a separate Docker container connected to the same network, the URL is `http://order-service:8080/orders`. **(Change this in your script if you previously used `127.0.0.1` or `host.docker.internal`)**
-
-4.  **Run k6 Test via Docker:**
-    * Open a new terminal in the *root* of the project.
+3.  **Run k6 Test via Docker:**
+    * Open a **new** terminal in the *root* of the project.
     * Run the following command:
         ```bash
         docker run --rm -v $(pwd):/scripts --network mrscraper-shop_mrscrapershop-net grafana/k6:latest run /scripts/load-testing.js
         ```
+5.  **Result Analysis:** Pay attention to the k6 metric:
+    * `checks_succeeded`: Target **~100%**.
+    * `http_req_failed`: Target **0%**.
+    * `http_reqs`: Target **~1000/s**.
 
-4.  **Result Analysis:** Note the key metrics from the k6 output to evaluate performance:
-
-    * `checks_succeeded`: Percentage of successful assertions. The ideal target is 100%, indicating all responses are valid.
-
-    * `http_req_failed`: Percentage of requests that failed due to network or server errors, the target is 0%.
-
-    * `http_reqs`: Actual system throughput (requests per second), the target is closer to 1000/s.
-
-    * `http_req_duration`: The time it took the server to respond.
-
-5. **Expected Results:** A successful load test will demonstrate the system's ability to handle approximately 1,000 requests per second (`http_reqs`) consistently throughout the test. The success rate (`checks_succeeded`) should be close to 100%, with the failure rate (`http_req_failed`) close to 0%. The response latency (`http_req_duration`) for `POST /orders` (which returns `202 Accepted`) is expected to be low, indicating that the endpoint is quickly accepting requests even though the actual processing is occurring in the background. If actual results are lower, analyzing service logs and k6 metrics can help identify bottlenecks.
+**Expected Results:**
+> A successful load test will demonstrate the system's ability to handle approximately 1000 requests per second (`http_reqs`) consistently throughout the test. The success rate (`checks_succeeded`) should be close to 100%, with the failure rate (`http_req_failed`) close to 0%. The response latency (`http_req_duration`) for `POST /orders` (which returns `202 Accepted`) is expected to be low, indicating that the endpoint is quickly accepting requests even though the actual processing is occurring in the background. If actual results are lower, analyzing service logs and k6 metrics can help identify bottlenecks.

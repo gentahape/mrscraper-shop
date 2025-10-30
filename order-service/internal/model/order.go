@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Order struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
+	ID         uint      `json:"id"`
 	ProductId  uint      `json:"productId"`
 	TotalPrice float64   `json:"totalPrice"`
 	Status     string    `json:"status"`
