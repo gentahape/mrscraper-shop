@@ -15,7 +15,7 @@ export const options = {
 };
 
 export function setup() {
-  const res = http.get('http://product-service:3000/products/1');
+  const res = http.get('http://bff-service:8000/products/1');
   check(res, {
     'Cache warmup call OK': (r) => r.status === 200,
   });
@@ -23,7 +23,7 @@ export function setup() {
 }
 
 export default function (data) {
-  const url = 'http://order-service:8080/orders';
+  const url = 'http://bff-service:8000/orders';
 
   const payload = JSON.stringify({
     productId: data.productId,

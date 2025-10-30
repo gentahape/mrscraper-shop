@@ -34,3 +34,5 @@ Thumbs.db
 /order-service/.env
 /order-service/.env.*
 !/order-service/.env.example
+
+/bff-service/node_modules/

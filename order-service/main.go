@@ -1,10 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"order-service/internal/handler"
 	"order-service/internal/model"
@@ -12,12 +12,14 @@ import (
 	"order-service/internal/service"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/streadway/amqp"
-
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
+
+var ctx = context.Background()
 
 func main() {
 	dbURL := os.Getenv("DATABASE_HOST")
@@ -25,17 +27,25 @@ func main() {
 	rabbitURL := os.Getenv("RABBITMQ_HOST")
 	productSvcURL := os.Getenv("PRODUCT_SERVICE_URL")
 
-	db, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
+	dbGorm, err := gorm.Open(postgres.Open(dbURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
-	dbSql, err := db.DB()
+	dbGorm.AutoMigrate(&model.Order{})
+
+	db, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {
-		log.Fatalf("failed to get database connection pool: %v", err)
+		log.Fatalf("failed to parse database URL: %v", err)
 	}
-	dbSql.SetMaxIdleConns(10)
-	dbSql.SetMaxOpenConns(100)
-	dbSql.SetConnMaxLifetime(time.Minute * 5)
+
+	db.MaxConns = 150
+	db.MinConns = 10
+
+	dbPool, err := pgxpool.NewWithConfig(ctx, db)
+	if err != nil {
+		log.Fatalf("failed to connect database: %v", err)
+	}
+	defer dbPool.Close()
 
 	opt, err := redis.ParseURL(redisURL)
 	if err != nil {
@@ -55,9 +65,7 @@ func main() {
 	}
 	defer amqpChan.Close()
 
-	db.AutoMigrate(&model.Order{})
-
-	orderRepo := repository.NewOrderRepository(db)
+	orderRepo := repository.NewOrderRepository(dbPool)
 	orderService := service.NewOrderService(orderRepo, rdb, amqpChan, productSvcURL)
 	orderHandler := handler.NewOrderHandler(orderService)
 
