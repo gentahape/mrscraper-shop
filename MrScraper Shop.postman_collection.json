@@ -58,9 +58,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{product_baseUrl}}/products",
+							"raw": "{{base_url}}/products",
 							"host": [
-								"{{product_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"products"
@@ -108,9 +108,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{product_baseUrl}}/products",
+							"raw": "{{base_url}}/products",
 							"host": [
-								"{{product_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"products"
@@ -170,9 +170,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{product_baseUrl}}/products/{{product_id}}",
+							"raw": "{{base_url}}/products/{{product_id}}",
 							"host": [
-								"{{product_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"products",
@@ -224,9 +224,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{product_baseUrl}}/products/0",
+							"raw": "{{base_url}}/products/0",
 							"host": [
-								"{{product_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"products",
@@ -272,9 +272,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{order_baseUrl}}/orders",
+							"raw": "{{base_url}}/orders",
 							"host": [
-								"{{order_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"orders"
@@ -314,7 +314,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productId\": {{product_id}},\n    \"quantity\": 100000000000000000000000000000000000000000000000000000000000000000\n}",
+							"raw": "{\n    \"productId\": {{product_id}},\n    \"quantity\": 1000000000\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -322,9 +322,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{order_baseUrl}}/orders",
+							"raw": "{{base_url}}/orders",
 							"host": [
-								"{{order_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"orders"
@@ -364,7 +364,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"productId\": 0,\n    \"quantity\": 10\n}",
+							"raw": "{\n    \"productId\": 99,\n    \"quantity\": 10\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -372,9 +372,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{order_baseUrl}}/orders",
+							"raw": "{{base_url}}/orders",
 							"host": [
-								"{{order_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"orders"
@@ -425,9 +425,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{order_baseUrl}}/orders/product/{{product_id}}",
+							"raw": "{{base_url}}/orders/product/{{product_id}}",
 							"host": [
-								"{{order_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"orders",
@@ -480,9 +480,9 @@
 							}
 						},
 						"url": {
-							"raw": "{{order_baseUrl}}/orders/product/0",
+							"raw": "{{base_url}}/orders/product/0",
 							"host": [
-								"{{order_baseUrl}}"
+								"{{base_url}}"
 							],
 							"path": [
 								"orders",
