@@ -110,14 +110,7 @@ All API interactions are done through the **BFF Service** at `http://localhost:8
     ```
     *The response will be 202 Accepted quickly. The storage and stock reduction process occurs in the background.*
 
-4.  **Wait a few seconds** for the event to be processed and stock to decrease.
-
-5.  **Check Product Stock Again:**
-    ```bash
-    curl http://localhost:8000/orders/product/1
-    ```
-
-6.  **Get Orders By Product ID:**
+4.  **Get Orders By Product ID:**
     ```bash
     curl http://localhost:8080/orders/product/1
     ```
